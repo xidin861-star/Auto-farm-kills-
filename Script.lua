@@ -112,7 +112,7 @@ Btn.MouseButton1Click:Connect(function()
     end
 end)
 
--- ### 4. ระบบวาร์ปมุดดิน (-5.7) ###
+-- ### 4. ระบบวาร์ปมุดดิน (-5.6) ###
 RunService.Heartbeat:Connect(function()
     if isFarming then
         if not currentTarget or not currentTarget.Parent or not currentTarget.Character or not currentTarget.Character:FindFirstChild("Humanoid") or currentTarget.Character.Humanoid.Health <= 0 then
@@ -130,7 +130,7 @@ RunService.Heartbeat:Connect(function()
         local tHrp = currentTarget.Character:FindFirstChild("HumanoidRootPart")
         
         if myHrp and tHrp then
-            myHrp.CFrame = tHrp.CFrame * CFrame.new(0, -5.7, 0) * CFrame.Angles(math.rad(90), 0, 0)
+            myHrp.CFrame = tHrp.CFrame * CFrame.new(0, -5.6, 0) * CFrame.Angles(math.rad(90), 0, 0)
             myHrp.Velocity = Vector3.new(0, 0, 0)
         end
     end
