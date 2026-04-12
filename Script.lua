@@ -99,7 +99,7 @@ RunService.Heartbeat:Connect(function()
         
         if myHrp and tHrp then
             -- มุดดินนอนราบ -5.5
-            myHrp.CFrame = tHrp.CFrame * CFrame.new(0, -5.5, 0) * CFrame.Angles(math.rad(90), 0, 0)
+            myHrp.CFrame = tHrp.CFrame * CFrame.new(0, -5.8, 0) * CFrame.Angles(math.rad(90), 0, 0)
             myHrp.Velocity = Vector3.new(0, 0, 0)
         end
     end
