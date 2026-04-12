@@ -107,7 +107,7 @@ RunService.Heartbeat:Connect(function()
             local targetHrp = targetChar.HumanoidRootPart
             
             -- วาร์ปไปนอนราบ -5.5 ใต้เท้า (ไกลแค่ไหนก็พุ่งไปหา)
-            myHrp.CFrame = targetHrp.CFrame * CFrame.new(0, -5.5, 0) * CFrame.Angles(math.rad(90), 0, 0)
+            myHrp.CFrame = targetHrp.CFrame * CFrame.new(0, -5.8, 0) * CFrame.Angles(math.rad(90), 0, 0)
             myHrp.Velocity = Vector3.new(0, 0, 0) -- ตัดแรงเฉื่อยป้องกันการหลุดแมพ
             
             -- สั่งโจมตีแบบ Loop
