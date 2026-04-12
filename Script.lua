@@ -1,48 +1,42 @@
--- [[ Auto farm kill v1 - FIXED & FAST ]] --
+-- [[ Auto farm kill v1 - LOCK-ON EDITION ]] --
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
 local lp = Players.LocalPlayer
 
--- ### 1. ระบบโจมตี (เน้นส่งสัญญาณรัว ไม่สนบั๊ก) ###
+-- ### 1. ระบบโจมตีต่อเนื่อง ###
 local function AttackLogic()
     local char = lp.Character
     if not char then return end
     local remote = char:FindFirstChild("Communicate")
     if not remote then return end
 
-    -- [M1 Spam] ส่งสัญญาณต่อย 4 ครั้งแบบรวดเร็ว
+    -- ต่อย 4 ครั้งรวด
     for i = 1, 4 do
-        remote:FireServer({
-            Goal = "LeftClickRelease",
-            Mobile = true
-        })
+        remote:FireServer({Goal = "LeftClickRelease", Mobile = true})
     end
 
-    -- [Skill Spam] สกิลไหนคูลดาวน์เสร็จ กดใช้ทันที
+    -- ยัดสกิล 1-4 (ตัวไหนคูลดาวน์เสร็จใช้ตัวนั้น)
     local skills = {"Normal Punch", "Consecutive Punches", "Shove", "Uppercut"}
     for _, name in ipairs(skills) do
         local tool = lp.Backpack:FindFirstChild(name) or char:FindFirstChild(name)
         if tool then
-            remote:FireServer({
-                Goal = "Auto Use End",
-                Tool = tool
-            })
+            remote:FireServer({Goal = "Auto Use End", Tool = tool})
         end
     end
 end
 
 -- ### 2. UI (ลากได้ ตายไม่หาย) ###
 local ScreenGui = Instance.new("ScreenGui")
-ScreenGui.Name = "AutoFarmV1_Fixed"
+ScreenGui.Name = "AutoFarmV1_LockOn"
 ScreenGui.ResetOnSpawn = false
 ScreenGui.Parent = lp:WaitForChild("PlayerGui")
 
 local MainFrame = Instance.new("Frame")
 MainFrame.Size = UDim2.new(0, 160, 0, 80)
 MainFrame.Position = UDim2.new(0.5, -80, 0.5, -40)
-MainFrame.BackgroundColor3 = Color3.fromRGB(20, 0, 0)
+MainFrame.BackgroundColor3 = Color3.fromRGB(0, 0, 40) -- สีน้ำเงินเข้มโหมดล็อคเป้า
 MainFrame.Active = true
-MainFrame.Draggable = true -- ลากได้ชัวร์
+MainFrame.Draggable = true 
 MainFrame.Parent = ScreenGui
 
 local Title = Instance.new("TextLabel")
@@ -59,11 +53,11 @@ ToggleBtn.Text = "OFF"
 ToggleBtn.BackgroundColor3 = Color3.fromRGB(150, 0, 0)
 ToggleBtn.Parent = MainFrame
 
--- ### 3. ระบบวาร์ปเกาะติด -5.8 (ไม่หยุดจนกว่าจะปิด) ###
+-- ### 3. ระบบวาร์ปและล็อคเป้าจนกว่าจะตาย ###
 local isFarming = false
 local target = nil
 
-local function findTarget()
+local function findNewTarget()
     local potential = {}
     for _, p in pairs(Players:GetPlayers()) do
         if p ~= lp and p.Character and p.Character:FindFirstChild("Humanoid") and p.Character.Humanoid.Health > 0 then
@@ -77,26 +71,30 @@ ToggleBtn.MouseButton1Click:Connect(function()
     isFarming = not isFarming
     ToggleBtn.Text = isFarming and "ON" or "OFF"
     ToggleBtn.BackgroundColor3 = isFarming and Color3.fromRGB(0, 150, 0) or Color3.fromRGB(150, 0, 0)
+    if not isFarming then target = nil end -- ล้างเป้าหมายเมื่อปิด
 end)
 
 RunService.Heartbeat:Connect(function()
     if isFarming then
-        -- ถ้าเป้าหมายเดิมตายหรือหายไป ให้หาคนใหม่ทันทีแบบไม่ต้องรอ
-        if not target or not target.Parent or not target.Character or target.Character.Humanoid.Health <= 0 then
-            target = findTarget()
+        -- ตรวจสอบเงื่อนไข: ถ้าเป้าหมายเดิม "ยังรอดอยู่" ให้เกาะติดต่อไป
+        local isTargetAlive = target and target.Parent and target.Character and target.Character:FindFirstChild("Humanoid") and target.Character.Humanoid.Health > 0
+        
+        if not isTargetAlive then
+            -- ถ้าเป้าหมายเดิมตายแล้ว หรือหายไป ถึงจะหาคนใหม่
+            target = findNewTarget()
             return
         end
 
+        -- วาร์ปเกาะติดเป้าหมายเดิม (ระยะ -5.8)
         local char = lp.Character
         if char and char:FindFirstChild("HumanoidRootPart") and target.Character:FindFirstChild("HumanoidRootPart") then
             local myHrp = char.HumanoidRootPart
             local tHrp = target.Character.HumanoidRootPart
             
-            -- วาร์ปมุดดิน -5.8 นอนราบ
             myHrp.CFrame = tHrp.CFrame * CFrame.new(0, -5.8, 0) * CFrame.Angles(math.rad(90), 0, 0)
             myHrp.Velocity = Vector3.new(0, 0, 0)
             
-            -- รันระบบโจมตีต่อเนื่อง
+            -- โจมตีจนกว่าจะตายกันไปข้างนึง
             AttackLogic()
         end
     end
