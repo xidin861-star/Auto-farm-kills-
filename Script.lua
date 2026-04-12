@@ -1,113 +1,117 @@
--- [[ CONFIGURATION & UI SETUP ]] --
+-- [[ AUTO FARM KILLS BY GEMINI - SMART SYSTEM ]] --
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
-local UserInputService = game:GetService("UserInputService")
-
 local lp = Players.LocalPlayer
-local isFollowing = false
-local targetPlayer = nil
 
--- สร้าง UI แบบ Code (เพื่อให้น้องก๊อปไปวางรันได้ทันที)
-local screenGui = Instance.new("ScreenGui")
-screenGui.Name = "StalkerGui"
-screenGui.IgnoreGuiInset = true
-screenGui.ResetOnSpawn = false -- ตายแล้วไม่หาย
-screenGui.Parent = lp:WaitForChild("PlayerGui")
-
-local mainFrame = Instance.new("Frame")
-mainFrame.Size = UDim2.new(0, 150, 0, 50)
-mainFrame.Position = UDim2.new(0.5, -75, 0.5, -25)
-mainFrame.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
-mainFrame.BorderSizePixel = 2
-mainFrame.Active = true
-mainFrame.Draggable = true -- สำหรับ PC/Mobile บางรุ่น (แต่เราจะเขียน Code ลากเองเสริมให้)
-mainFrame.Parent = screenGui
-
-local toggleBtn = Instance.new("TextButton")
-toggleBtn.Size = UDim2.new(1, -10, 1, -10)
-toggleBtn.Position = UDim2.new(0, 5, 0, 5)
-toggleBtn.Text = "FOLLOW: OFF"
-toggleBtn.BackgroundColor3 = Color3.fromRGB(200, 50, 50)
-toggleBtn.TextColor3 = Color3.new(1, 1, 1)
-toggleBtn.Font = Enum.Font.GothamBold
-toggleBtn.TextSize = 14
-toggleBtn.Parent = mainFrame
-
--- [[ LOGIC FUNCTIONS ]] --
-
--- ฟังก์ชันหาเป้าหมายใหม่ (ใครก็ได้ที่ไม่ใช่เรา)
-local function findRandomTarget()
-    local allPlayers = Players:GetPlayers()
-    local potentialTargets = {}
+-- ### 1. ระบบจัดการการโจมตี (Attack Logic) ###
+local function AttackLogic(targetExists)
+    -- ถ้าไม่มีเป้าหมาย (targetExists เป็น false) จะไม่ทำอะไรเลย
+    if not targetExists then return end
     
-    for _, p in pairs(allPlayers) do
-        if p ~= lp and p.Character and p.Character:FindFirstChild("HumanoidRootPart") then
-            table.insert(potentialTargets, p)
+    local char = lp.Character
+    if not char then return end
+    local remote = char:FindFirstChild("Communicate")
+    if not remote then return end
+
+    local function useSkill(name)
+        local tool = lp.Backpack:FindFirstChild(name) or char:FindFirstChild(name)
+        if tool then
+            remote:FireServer({
+                Goal = "Auto Use End",
+                Tool = tool
+            })
         end
     end
-    
-    if #potentialTargets > 0 then
-        return potentialTargets[math.random(1, #potentialTargets)]
-    end
-    return nil
+
+    -- [M1] ต่อยธรรมดา (จากรหัส LeftClickRelease ของน้อง)
+    remote:FireServer({
+        Goal = "LeftClickRelease",
+        Mobile = true
+    })
+
+    -- [สกิล 1-4]
+    useSkill("Normal Punch")
+    task.wait(0.1)
+    useSkill("Consecutive Punches")
+    task.wait(0.1)
+    useSkill("Shove")
+    task.wait(0.1)
+    useSkill("Uppercut")
 end
 
--- ระบบลาก UI สำหรับมือถือ (เนียนกว่า Draggable ธรรมดา)
-local dragging, dragInput, dragStart, startPos
-mainFrame.InputBegan:Connect(function(input)
-    if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
-        dragging = true
-        dragStart = input.Position
-        startPos = mainFrame.Position
-    end
-end)
+-- ### 2. สร้าง UI (ลากได้ / ตายไม่หาย) ###
+local ScreenGui = Instance.new("ScreenGui")
+ScreenGui.Name = "AutoFarmV3"
+ScreenGui.ResetOnSpawn = false 
+ScreenGui.Parent = lp:WaitForChild("PlayerGui")
 
-UserInputService.InputChanged:Connect(function(input)
-    if dragging and (input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch) then
-        local delta = input.Position - dragStart
-        mainFrame.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)
-    end
-end)
+local MainFrame = Instance.new("Frame")
+MainFrame.Size = UDim2.new(0, 160, 0, 80)
+MainFrame.Position = UDim2.new(0.5, -80, 0.5, -40)
+MainFrame.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
+MainFrame.Active = true
+MainFrame.Draggable = true 
+MainFrame.Parent = ScreenGui
 
-UserInputService.InputEnded:Connect(function(input)
-    if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
-        dragging = false
-    end
-end)
+local Title = Instance.new("TextLabel")
+Title.Size = UDim2.new(1, 0, 0, 25)
+Title.Text = "Auto Farm Kills V3"
+Title.TextColor3 = Color3.new(1, 1, 1)
+Title.BackgroundTransparency = 1
+Title.Parent = MainFrame
 
--- [[ MAIN LOOP ]] --
+local ToggleBtn = Instance.new("TextButton")
+ToggleBtn.Size = UDim2.new(0.9, 0, 0, 40)
+ToggleBtn.Position = UDim2.new(0.05, 0, 0.4, 0)
+ToggleBtn.Text = "FARM: OFF"
+ToggleBtn.BackgroundColor3 = Color3.fromRGB(150, 0, 0)
+ToggleBtn.TextColor3 = Color3.new(1, 1, 1)
+ToggleBtn.Parent = MainFrame
 
-toggleBtn.MouseButton1Click:Connect(function()
-    isFollowing = not isFollowing
-    if isFollowing then
-        toggleBtn.Text = "FOLLOW: ON"
-        toggleBtn.BackgroundColor3 = Color3.fromRGB(50, 200, 50)
-        targetPlayer = findRandomTarget()
-    else
-        toggleBtn.Text = "FOLLOW: OFF"
-        toggleBtn.BackgroundColor3 = Color3.fromRGB(200, 50, 50)
-        targetPlayer = nil
+-- ### 3. ระบบวาร์ปและตรวจสอบเป้าหมายแบบเรียลไทม์ ###
+local isFarming = false
+local target = nil
+
+local function findTarget()
+    local players = Players:GetPlayers()
+    local list = {}
+    for _, p in pairs(players) do
+        if p ~= lp and p.Character and p.Character:FindFirstChild("Humanoid") and p.Character.Humanoid.Health > 0 then
+            table.insert(list, p)
+        end
     end
+    return #list > 0 and list[math.random(1, #list)] or nil
+end
+
+ToggleBtn.MouseButton1Click:Connect(function()
+    isFarming = not isFarming
+    ToggleBtn.Text = isFarming and "FARM: ON" or "FARM: OFF"
+    ToggleBtn.BackgroundColor3 = isFarming and Color3.fromRGB(0, 150, 0) or Color3.fromRGB(150, 0, 0)
+    if isFarming then target = findTarget() end
 end)
 
 RunService.RenderStepped:Connect(function()
-    if isFollowing then
-        -- 1. ตรวจสอบว่าเป้าหมายยังอยู่ในเกม/ยังไม่ตายไหม ถ้าไม่อยู่ให้หาคนใหม่ทันที
-        if not targetPlayer or not targetPlayer.Parent or not targetPlayer.Character or not targetPlayer.Character:FindFirstChild("HumanoidRootPart") then
-            targetPlayer = findRandomTarget()
-        end
+    if isFarming then
+        -- ตรวจสอบว่าเป้าหมายยังอยู่และไม่ตาย
+        local targetReady = target and target.Parent and target.Character and target.Character:FindFirstChild("Humanoid") and target.Character.Humanoid.Health > 0
         
-        -- 2. วาร์ปไปติดตัว (ใต้เท้า) แม้เขาจะเคลื่อนที่เร็วหรือใช้สกิล
-        if targetPlayer and targetPlayer.Character and lp.Character and lp.Character:FindFirstChild("HumanoidRootPart") then
-            local myRoot = lp.Character.HumanoidRootPart
-            local targetRoot = targetPlayer.Character.HumanoidRootPart
+        if not targetReady then
+            target = findTarget() -- หาคนใหม่ทันที
+            return -- หยุดการทำงานของรอบนี้ (ไม่วาร์ป ไม่ตี) จนกว่าจะเจอคนใหม่
+        end
+
+        if lp.Character and lp.Character:FindFirstChild("HumanoidRootPart") then
+            local myHrp = lp.Character.HumanoidRootPart
+            local targetHrp = target.Character:FindFirstChild("HumanoidRootPart")
             
-            -- วาร์ปไปตำแหน่งเป้าหมาย + ปรับตำแหน่งให้ลงไปใต้เท้า (Y - 4)
-            -- ใช้ CFrame เพื่อให้ตัวเราหันหน้าตามเป้าหมายด้วย
-            myRoot.CFrame = targetRoot.CFrame * CFrame.new(0, -4, 0)
-            
-            -- ปรับแรงเฉื่อยให้เป็น 0 เพื่อไม่ให้ตัวเรากระเด็นหลุด
-            myRoot.Velocity = Vector3.new(0, 0, 0)
+            if targetHrp then
+                -- วาร์ปไปนอนใต้เท้า จมดิน -3.8 แนวนอน
+                myHrp.CFrame = targetHrp.CFrame * CFrame.new(0, -3.8, 0) * CFrame.Angles(math.rad(90), 0, 0)
+                myHrp.Velocity = Vector3.new(0, 0, 0)
+                
+                -- ส่งค่า true เข้าไปเพื่อให้ AttackLogic เริ่มทำงาน
+                task.spawn(function() AttackLogic(true) end)
+            end
         end
     end
 end)
