@@ -7,7 +7,7 @@ local lp = Players.LocalPlayer
 
 -- ### 1. UI Setup (ชื่อใหม่ตามสั่ง) ###
 local ScreenGui = Instance.new("ScreenGui")
-ScreenGui.Name = "AutoFarm_KILL_V1"
+ScreenGui.Name = "AutoFarm_KILL_V8"
 ScreenGui.ResetOnSpawn = false 
 ScreenGui.Parent = lp:WaitForChild("PlayerGui")
 
@@ -112,7 +112,7 @@ Btn.MouseButton1Click:Connect(function()
     end
 end)
 
--- ### 4. ระบบวาร์ปมุดดิน (-5.6) ###
+-- ### 4. ระบบวาร์ปมุดดิน (-5.7) ###
 RunService.Heartbeat:Connect(function()
     if isFarming then
         if not currentTarget or not currentTarget.Parent or not currentTarget.Character or not currentTarget.Character:FindFirstChild("Humanoid") or currentTarget.Character.Humanoid.Health <= 0 then
